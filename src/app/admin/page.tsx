@@ -2,6 +2,9 @@ import Link from "next/link";
 import { CalendarDays, Megaphone, Trophy, UsersRound } from "lucide-react";
 import { prisma } from "@/lib/prisma";
 import { formatDateTime } from "@/lib/format";
+import { formatScheduleResult } from "@/lib/matchup";
+import { RESULT_OR_COMPLETED_MATCHES_WHERE, UPCOMING_MATCHES_WHERE } from "@/lib/schedule-query";
+import { getEffectiveScheduleStatus } from "@/lib/schedule-status";
 import { AdminPageHeader } from "@/components/admin/admin-page-header";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -15,10 +18,10 @@ export default async function AdminDashboardPage() {
   const [players, categories, upcomingMatches, publishedAnnouncements, recentResults] = await Promise.all([
     prisma.player.count(),
     prisma.category.count(),
-    prisma.matchSchedule.count({ where: { status: { in: ["SCHEDULED", "ONGOING", "POSTPONED"] } } }),
+    prisma.matchSchedule.count({ where: UPCOMING_MATCHES_WHERE }),
     prisma.announcement.count({ where: { published: true } }),
     prisma.matchSchedule.findMany({
-      where: { status: "COMPLETED" },
+      where: RESULT_OR_COMPLETED_MATCHES_WHERE,
       include: { category: true },
       orderBy: { matchDate: "desc" },
       take: 6,
@@ -79,9 +82,9 @@ export default async function AdminDashboardPage() {
                     <TableCell>{match.category.name}</TableCell>
                     <TableCell>{match.opponentName}</TableCell>
                     <TableCell>
-                      <MatchStatusBadge status={match.status} />
+                      <MatchStatusBadge status={getEffectiveScheduleStatus(match)} />
                     </TableCell>
-                    <TableCell>{match.resultText || `${match.homeScore ?? 0} - ${match.opponentScore ?? 0}`}</TableCell>
+                    <TableCell>{formatScheduleResult(match)}</TableCell>
                   </TableRow>
                 ))}
               </TableBody>

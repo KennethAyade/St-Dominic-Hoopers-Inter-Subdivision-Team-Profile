@@ -1,6 +1,7 @@
 import { prisma } from "@/lib/prisma";
 import { formatDateTime } from "@/lib/format";
 import { formatScheduleResult } from "@/lib/matchup";
+import { getEffectiveScheduleStatus } from "@/lib/schedule-status";
 import { AdminPageHeader } from "@/components/admin/admin-page-header";
 import { AdminEditDialog, AdminFormDialog } from "@/components/admin/admin-form-dialog";
 import { DeleteButton } from "@/components/forms/delete-button";
@@ -76,7 +77,7 @@ export default async function AdminSchedulesPage({
                 <TableCell>{schedule.opponentName}</TableCell>
                 <TableCell>{schedule.venue}</TableCell>
                 <TableCell>
-                  <MatchStatusBadge status={schedule.status} />
+                  <MatchStatusBadge status={getEffectiveScheduleStatus(schedule)} />
                 </TableCell>
                 <TableCell>{formatScheduleResult(schedule)}</TableCell>
                 <TableCell>

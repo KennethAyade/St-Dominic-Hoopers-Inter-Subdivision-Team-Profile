@@ -4,6 +4,7 @@ import { PageHeader } from "@/components/public/page-header";
 import { ScheduleTable } from "@/components/public/schedule-table";
 import { EmptyState } from "@/components/public/empty-state";
 import { CategoryFilterBar } from "@/components/public/category-filter-bar";
+import { CLOSED_MATCHES_WHERE, UPCOMING_MATCHES_WHERE } from "@/lib/schedule-query";
 
 export const dynamic = "force-dynamic";
 
@@ -24,12 +25,12 @@ export default async function SchedulesPage({
 
   const [upcoming, completed] = await Promise.all([
     prisma.matchSchedule.findMany({
-      where: { ...categoryWhere, status: { in: ["SCHEDULED", "ONGOING", "POSTPONED"] } },
+      where: { ...categoryWhere, ...UPCOMING_MATCHES_WHERE },
       include: { category: true },
       orderBy: { matchDate: "asc" },
     }),
     prisma.matchSchedule.findMany({
-      where: { ...categoryWhere, status: { in: ["COMPLETED", "CANCELLED"] } },
+      where: { ...categoryWhere, ...CLOSED_MATCHES_WHERE },
       include: { category: true },
       orderBy: { matchDate: "desc" },
     }),

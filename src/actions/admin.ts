@@ -5,6 +5,12 @@ import { hash } from "bcryptjs";
 import { auth } from "../../auth";
 import { prisma } from "@/lib/prisma";
 import { slugify } from "@/lib/utils";
+import { getEffectiveScheduleStatus } from "@/lib/schedule-status";
+import {
+  baselineForEntry,
+  calculateCategoryStandingBaselines,
+  recalculateCategoryStandings,
+} from "@/lib/standings-recalc";
 import {
   announcementSchema,
   galleryItemSchema,
@@ -88,6 +94,33 @@ function parseManilaDateTime(value: string) {
 
   const withSeconds = value.length === 16 ? `${value}:00` : value;
   return new Date(`${withSeconds}+08:00`);
+}
+
+function nullableText(value?: string | null) {
+  return value?.trim() || null;
+}
+
+async function standingDisplayName(input: {
+  teamName?: string | null;
+  playerName?: string | null;
+  playerId?: string | null;
+  fallback?: string | null;
+}) {
+  const teamName = nullableText(input.teamName);
+  if (teamName) return teamName;
+
+  const playerName = nullableText(input.playerName);
+  if (playerName) return playerName;
+
+  if (input.playerId) {
+    const player = await prisma.player.findUnique({
+      where: { id: input.playerId },
+      select: { firstName: true, lastName: true },
+    });
+    if (player) return `${player.firstName} ${player.lastName}`;
+  }
+
+  return nullableText(input.fallback) ?? "Entry";
 }
 
 export async function savePlayer(input: unknown): Promise<ActionResult> {
@@ -323,21 +356,32 @@ export async function saveSchedule(input: unknown): Promise<ActionResult> {
   try {
     const user = await requireAdmin();
     const data = scheduleSchema.parse(input);
+    const existing = data.id
+      ? await prisma.matchSchedule.findUnique({ where: { id: data.id }, select: { categoryId: true } })
+      : null;
+    const homeScore = data.homeScore ?? null;
+    const opponentScore = data.opponentScore ?? null;
+    const resultText = nullableText(data.resultText);
+    const remarks = nullableText(data.remarks);
     const payload = {
       categoryId: data.categoryId,
       opponentName: data.opponentName,
       matchDate: parseManilaDateTime(data.matchDate),
       venue: data.venue,
-      status: data.status,
-      homeScore: data.homeScore,
-      opponentScore: data.opponentScore,
-      resultText: data.resultText,
-      remarks: data.remarks,
+      status: getEffectiveScheduleStatus({ status: data.status, homeScore, opponentScore, resultText }),
+      homeScore,
+      opponentScore,
+      resultText,
+      remarks,
     };
 
     const schedule = data.id
       ? await prisma.matchSchedule.update({ where: { id: data.id }, data: { ...payload, updatedById: user.id } })
       : await prisma.matchSchedule.create({ data: { ...payload, createdById: user.id, updatedById: user.id } });
+    await recalculateCategoryStandings(prisma, schedule.categoryId, user.id);
+    if (existing?.categoryId && existing.categoryId !== schedule.categoryId) {
+      await recalculateCategoryStandings(prisma, existing.categoryId, user.id);
+    }
 
     await writeAudit({
       userId: user.id,
@@ -356,7 +400,9 @@ export async function saveSchedule(input: unknown): Promise<ActionResult> {
 export async function deleteSchedule(id: string): Promise<ActionResult> {
   try {
     const user = await requireAdmin();
+    const schedule = await prisma.matchSchedule.findUnique({ where: { id }, select: { categoryId: true } });
     await prisma.matchSchedule.delete({ where: { id } });
+    if (schedule) await recalculateCategoryStandings(prisma, schedule.categoryId, user.id);
     await writeAudit({ userId: user.id, action: "DELETE", entity: "MatchSchedule", entityId: id, summary: "Deleted schedule." });
     revalidatePortal();
     return { ok: true, message: "Schedule deleted." };
@@ -369,22 +415,49 @@ export async function saveStanding(input: unknown): Promise<ActionResult> {
   try {
     const user = await requireAdmin();
     const data = standingSchema.parse(input);
-    const payload = {
-      categoryId: data.categoryId,
-      playerId: data.playerId,
+    const existing = data.id
+      ? await prisma.standing.findUnique({
+          where: { id: data.id },
+          include: { player: { select: { firstName: true, lastName: true } } },
+        })
+      : null;
+    const playerId = nullableText(data.playerId);
+    const entryName = await standingDisplayName({
       teamName: data.teamName,
       playerName: data.playerName,
+      playerId,
+      fallback:
+        existing?.teamName ||
+        existing?.playerName ||
+        (existing?.player ? `${existing.player.firstName} ${existing.player.lastName}` : null),
+    });
+    const baselines = await calculateCategoryStandingBaselines(prisma, data.categoryId, [entryName]);
+    const baseline = baselineForEntry(baselines, entryName);
+    const payload = {
+      categoryId: data.categoryId,
+      playerId,
+      teamName: nullableText(data.teamName),
+      playerName: nullableText(data.playerName),
       wins: data.wins,
       losses: data.losses,
       points: data.points,
       rank: data.rank,
       scoreDifference: data.scoreDifference,
-      remarks: data.remarks,
+      manualWinsDelta: data.wins - baseline.wins,
+      manualLossesDelta: data.losses - baseline.losses,
+      manualPointsDelta: data.points - baseline.points,
+      manualScoreDifferenceDelta: data.scoreDifference - baseline.scoreDifference,
+      manualRankOverride: data.rank !== baseline.rank ? data.rank : null,
+      remarks: nullableText(data.remarks),
     };
 
     const standing = data.id
       ? await prisma.standing.update({ where: { id: data.id }, data: { ...payload, updatedById: user.id } })
       : await prisma.standing.create({ data: { ...payload, createdById: user.id, updatedById: user.id } });
+    await recalculateCategoryStandings(prisma, standing.categoryId, user.id);
+    if (existing?.categoryId && existing.categoryId !== standing.categoryId) {
+      await recalculateCategoryStandings(prisma, existing.categoryId, user.id);
+    }
 
     await writeAudit({
       userId: user.id,
@@ -403,10 +476,41 @@ export async function saveStanding(input: unknown): Promise<ActionResult> {
 export async function deleteStanding(id: string): Promise<ActionResult> {
   try {
     const user = await requireAdmin();
+    const standing = await prisma.standing.findUnique({ where: { id }, select: { categoryId: true } });
     await prisma.standing.delete({ where: { id } });
+    if (standing) await recalculateCategoryStandings(prisma, standing.categoryId, user.id);
     await writeAudit({ userId: user.id, action: "DELETE", entity: "Standing", entityId: id, summary: "Deleted standing." });
     revalidatePortal();
     return { ok: true, message: "Standing deleted." };
+  } catch (error) {
+    return actionError(error);
+  }
+}
+
+export async function resetStandingAdjustments(id: string): Promise<ActionResult> {
+  try {
+    const user = await requireAdmin();
+    const standing = await prisma.standing.update({
+      where: { id },
+      data: {
+        manualWinsDelta: 0,
+        manualLossesDelta: 0,
+        manualPointsDelta: 0,
+        manualScoreDifferenceDelta: 0,
+        manualRankOverride: null,
+        updatedById: user.id,
+      },
+    });
+    await recalculateCategoryStandings(prisma, standing.categoryId, user.id);
+    await writeAudit({
+      userId: user.id,
+      action: "UPDATE",
+      entity: "Standing",
+      entityId: id,
+      summary: "Reset standing manual adjustments.",
+    });
+    revalidatePortal();
+    return { ok: true, message: "Standing adjustments reset." };
   } catch (error) {
     return actionError(error);
   }

@@ -1,10 +1,14 @@
 import * as React from "react";
 import { cn } from "@/lib/utils";
 
-function Table({ className, ...props }: React.HTMLAttributes<HTMLTableElement>) {
+interface TableProps extends React.HTMLAttributes<HTMLTableElement> {
+  containerClassName?: string;
+}
+
+function Table({ className, containerClassName, ...props }: TableProps) {
   return (
-    <div className="w-full overflow-auto">
-      <table className={cn("w-full caption-bottom text-sm", className)} {...props} />
+    <div className={cn("w-full max-w-full overflow-x-auto overscroll-x-contain", containerClassName)}>
+      <table className={cn("w-full min-w-max caption-bottom text-sm", className)} {...props} />
     </div>
   );
 }

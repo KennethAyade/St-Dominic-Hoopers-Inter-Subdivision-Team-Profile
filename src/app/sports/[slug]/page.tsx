@@ -7,6 +7,8 @@ import { RosterProfileGrid } from "@/components/public/roster-profile-grid";
 import { ScheduleTable } from "@/components/public/schedule-table";
 import { StandingTable } from "@/components/public/standing-table";
 import { AnnouncementCard } from "@/components/public/announcement-card";
+import { isClosedSchedule, isUpcomingSchedule } from "@/lib/schedule-status";
+import { sortStandings } from "@/lib/standings";
 
 export const dynamic = "force-dynamic";
 
@@ -22,7 +24,7 @@ export default async function SportDetailPage({ params }: { params: Promise<{ sl
           orderBy: [{ role: "asc" }, { player: { lastName: "asc" } }],
         },
         matchSchedules: { include: { category: true }, orderBy: { matchDate: "asc" } },
-        standings: { include: { category: true, player: true }, orderBy: [{ rank: "asc" }, { points: "desc" }] },
+        standings: { include: { category: true, player: true } },
       },
     }),
     prisma.announcement.findMany({
@@ -34,7 +36,9 @@ export default async function SportDetailPage({ params }: { params: Promise<{ sl
 
   if (!category) notFound();
 
-  const completed = category.matchSchedules.filter((schedule) => schedule.status === "COMPLETED");
+  const upcoming = category.matchSchedules.filter(isUpcomingSchedule);
+  const completed = category.matchSchedules.filter(isClosedSchedule);
+  const standings = sortStandings(category.standings);
 
   return (
     <SiteShell>
@@ -54,7 +58,7 @@ export default async function SportDetailPage({ params }: { params: Promise<{ sl
         </div>
         <div>
           <h2 className="mb-4 text-2xl font-black tracking-normal">Schedule / matches</h2>
-          {category.matchSchedules.length ? <ScheduleTable schedules={category.matchSchedules} /> : <EmptyState title="No matches posted yet." />}
+          {upcoming.length ? <ScheduleTable schedules={upcoming} /> : <EmptyState title="No upcoming matches posted." />}
         </div>
         <div>
           <h2 className="mb-4 text-2xl font-black tracking-normal">Results</h2>
@@ -62,7 +66,7 @@ export default async function SportDetailPage({ params }: { params: Promise<{ sl
         </div>
         <div>
           <h2 className="mb-4 text-2xl font-black tracking-normal">Standings</h2>
-          {category.standings.length ? <StandingTable standings={category.standings} /> : <EmptyState title="Standings will be updated soon." />}
+          {standings.length ? <StandingTable standings={standings} /> : <EmptyState title="Standings will be updated soon." />}
         </div>
         <div>
           <h2 className="mb-4 text-2xl font-black tracking-normal">Notes and announcements</h2>

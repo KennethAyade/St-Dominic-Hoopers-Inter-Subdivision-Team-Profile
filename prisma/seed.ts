@@ -3,6 +3,7 @@ import { PrismaPg } from "@prisma/adapter-pg";
 import { hash } from "bcryptjs";
 import { MAYORS_CUP_SCHEDULE_EXPECTED_COUNTS, seedMayorCupSchedules } from "./mayors-cup-schedules";
 import { MAYORS_CUP_STANDING_EXPECTED_COUNTS, seedMayorCupStandings } from "./mayors-cup-standings";
+import { recalculateAllStandings } from "../src/lib/standings-recalc";
 
 const adapter = new PrismaPg({
   connectionString: process.env.DATABASE_URL ?? "postgresql://user:password@localhost:5432/st_dominic_hoopers",
@@ -257,6 +258,7 @@ async function main() {
 
   const scheduleSummary = await seedMayorCupSchedules(prisma, admin.id);
   const standingSummary = await seedMayorCupStandings(prisma, admin.id);
+  await recalculateAllStandings(prisma, admin.id);
 
   await prisma.announcement.upsert({
     where: { slug: "portal-launch" },

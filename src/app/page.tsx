@@ -3,6 +3,8 @@ import { ArrowRight, CalendarDays, ChevronRight, ShieldCheck, Trophy, UsersRound
 import { prisma } from "@/lib/prisma";
 import { TEAM_NAME, TOURNAMENT_NAME } from "@/lib/constants";
 import { formatDate, formatDateTime } from "@/lib/format";
+import { formatScheduleResult } from "@/lib/matchup";
+import { RESULT_OR_COMPLETED_MATCHES_WHERE, UPCOMING_MATCHES_WHERE } from "@/lib/schedule-query";
 import { SiteShell } from "@/components/public/site-shell";
 import { EmptyState } from "@/components/public/empty-state";
 import { AnnouncementCategoryBadge, MatchStatusBadge } from "@/components/public/status-badge";
@@ -22,7 +24,7 @@ export default async function Home() {
       orderBy: [{ sortOrder: "asc" }, { name: "asc" }],
     }),
     prisma.matchSchedule.findMany({
-      where: { status: { in: ["SCHEDULED", "ONGOING", "POSTPONED"] } },
+      where: UPCOMING_MATCHES_WHERE,
       include: { category: true },
       orderBy: { matchDate: "asc" },
       take: 3,
@@ -33,7 +35,7 @@ export default async function Home() {
       take: 3,
     }),
     prisma.matchSchedule.findMany({
-      where: { status: "COMPLETED" },
+      where: RESULT_OR_COMPLETED_MATCHES_WHERE,
       include: { category: true },
       orderBy: { matchDate: "desc" },
       take: 3,
@@ -201,10 +203,8 @@ export default async function Home() {
                   <p className="text-xs font-bold uppercase tracking-normal text-muted-foreground">{match.category.name}</p>
                   <h3 className="mt-2 font-black">vs {match.opponentName}</h3>
                   <p className="mt-1 text-xs text-muted-foreground">{formatDate(match.matchDate)}</p>
-                  <p className="mt-4 text-2xl font-black text-primary">
-                    {match.homeScore ?? "-"} - {match.opponentScore ?? "-"}
-                  </p>
-                  <p className="text-xs font-black uppercase text-muted-foreground">{match.resultText || "Completed"}</p>
+                  <p className="mt-4 text-lg font-black text-primary">{formatScheduleResult(match)}</p>
+                  <p className="text-xs font-black uppercase text-muted-foreground">Completed</p>
                 </CardContent>
               </Card>
             ))}

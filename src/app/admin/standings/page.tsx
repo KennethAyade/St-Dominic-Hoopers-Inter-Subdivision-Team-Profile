@@ -4,6 +4,7 @@ import { compareStandings, sortStandings, standingEntryName } from "@/lib/standi
 import { AdminPageHeader } from "@/components/admin/admin-page-header";
 import { AdminEditDialog, AdminFormDialog } from "@/components/admin/admin-form-dialog";
 import { DeleteButton } from "@/components/forms/delete-button";
+import { ResetStandingAdjustmentsButton } from "@/components/forms/reset-standing-adjustments-button";
 import { StandingForm } from "@/components/forms/standing-form";
 import { EmptyState } from "@/components/public/empty-state";
 import { CategoryFilterBar } from "@/components/public/category-filter-bar";
@@ -42,6 +43,12 @@ export default async function AdminStandingsPage({
 
   const categoryOptions = categories.map((category) => ({ id: category.id, label: category.name }));
   const playerOptions = players.map((player) => ({ id: player.id, label: fullName(player) }));
+  const hasManualAdjustments = (standing: (typeof standings)[number]) =>
+    standing.manualWinsDelta !== 0 ||
+    standing.manualLossesDelta !== 0 ||
+    standing.manualPointsDelta !== 0 ||
+    standing.manualScoreDifferenceDelta !== 0 ||
+    standing.manualRankOverride !== null;
 
   return (
     <>
@@ -90,7 +97,7 @@ export default async function AdminStandingsPage({
                 <TableCell>{standing.points}</TableCell>
                 <TableCell>{standing.scoreDifference}</TableCell>
                 <TableCell>
-                  <div className="flex gap-2">
+                  <div className="flex flex-wrap gap-2">
                     <AdminEditDialog title="Edit standing">
                       <StandingForm
                         categories={categoryOptions}
@@ -110,6 +117,7 @@ export default async function AdminStandingsPage({
                         }}
                       />
                     </AdminEditDialog>
+                    {hasManualAdjustments(standing) ? <ResetStandingAdjustmentsButton id={standing.id} /> : null}
                     <DeleteButton id={standing.id} kind="standing" />
                   </div>
                 </TableCell>

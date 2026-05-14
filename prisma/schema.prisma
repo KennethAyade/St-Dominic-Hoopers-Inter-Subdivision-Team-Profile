@@ -225,21 +225,26 @@ model MatchSchedule {
 }
 
 model Standing {
-  id              String   @id @default(cuid())
-  categoryId      String
-  playerId        String?
-  teamName        String?
-  playerName      String?
-  wins            Int      @default(0)
-  losses          Int      @default(0)
-  points          Int      @default(0)
-  rank            Int      @default(0)
-  scoreDifference Int      @default(0)
-  remarks         String?
-  createdById     String?
-  updatedById     String?
-  createdAt       DateTime @default(now())
-  updatedAt       DateTime @updatedAt
+  id                         String   @id @default(cuid())
+  categoryId                 String
+  playerId                   String?
+  teamName                   String?
+  playerName                 String?
+  wins                       Int      @default(0)
+  losses                     Int      @default(0)
+  points                     Int      @default(0)
+  rank                       Int      @default(0)
+  scoreDifference            Int      @default(0)
+  manualWinsDelta            Int      @default(0)
+  manualLossesDelta          Int      @default(0)
+  manualPointsDelta          Int      @default(0)
+  manualScoreDifferenceDelta Int      @default(0)
+  manualRankOverride         Int?
+  remarks                    String?
+  createdById                String?
+  updatedById                String?
+  createdAt                  DateTime @default(now())
+  updatedAt                  DateTime @updatedAt
 
   category  Category @relation(fields: [categoryId], references: [id], onDelete: Cascade)
   player    Player?  @relation(fields: [playerId], references: [id], onDelete: SetNull)
@@ -247,6 +252,7 @@ model Standing {
   updatedBy User?    @relation("StandingUpdatedBy", fields: [updatedById], references: [id], onDelete: SetNull)
 
   @@index([categoryId, rank])
+  @@index([categoryId, teamName])
 }
 
 model Announcement {
