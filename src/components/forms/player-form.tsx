@@ -15,8 +15,21 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { FormField } from "@/components/forms/form-field";
 import { PlayerAvatar } from "@/components/public/player-avatar";
 import { PLAYER_STATUS_LABELS } from "@/lib/constants";
+import { cn } from "@/lib/utils";
 
-export function PlayerForm({ initialData }: { initialData?: Partial<PlayerInput> }) {
+type PlayerCategoryOption = {
+  id: string;
+  label: string;
+  sportLabel: string;
+};
+
+export function PlayerForm({
+  initialData,
+  categories = [],
+}: {
+  initialData?: Partial<PlayerInput>;
+  categories?: PlayerCategoryOption[];
+}) {
   const router = useRouter();
   const [pending, startTransition] = useTransition();
   const form = useForm<PlayerInput>({
@@ -27,6 +40,7 @@ export function PlayerForm({ initialData }: { initialData?: Partial<PlayerInput>
       lastName: initialData?.lastName ?? "",
       nickname: initialData?.nickname ?? "",
       imageUrl: initialData?.imageUrl ?? "",
+      categoryIds: initialData?.categoryIds ?? [],
       defaultRole: initialData?.defaultRole ?? "",
       jerseyNumber: initialData?.jerseyNumber ?? "",
       ageGroup: initialData?.ageGroup ?? "",
@@ -38,13 +52,28 @@ export function PlayerForm({ initialData }: { initialData?: Partial<PlayerInput>
   const imageUrl = useWatch({ control: form.control, name: "imageUrl" });
   const firstName = useWatch({ control: form.control, name: "firstName" });
   const lastName = useWatch({ control: form.control, name: "lastName" });
+  const selectedCategoryIds = useWatch({ control: form.control, name: "categoryIds" }) ?? [];
   const previewName = `${firstName || "Player"} ${lastName || "Profile"}`;
 
   const onSubmit = form.handleSubmit((values) => {
     startTransition(async () => {
       const result = await savePlayer(values);
       toast[result.ok ? "success" : "error"](result.message);
-      if (result.ok && !values.id) form.reset({ status: PlayerStatus.ACTIVE } as PlayerInput);
+      if (result.ok && !values.id) {
+        form.reset({
+          firstName: "",
+          lastName: "",
+          nickname: "",
+          imageUrl: "",
+          categoryIds: [],
+          defaultRole: "",
+          jerseyNumber: "",
+          ageGroup: "",
+          status: PlayerStatus.ACTIVE,
+          notes: "",
+          seedNote: "",
+        });
+      }
       router.refresh();
     });
   });
@@ -81,6 +110,37 @@ export function PlayerForm({ initialData }: { initialData?: Partial<PlayerInput>
           <Input id="ageGroup" placeholder="Open, 14U" {...form.register("ageGroup")} />
         </FormField>
       </div>
+      {categories.length ? (
+        <fieldset className="space-y-2">
+          <legend className="text-sm font-medium leading-none">Sport/category assignment</legend>
+          <div className="grid gap-2 sm:grid-cols-2">
+            {categories.map((category) => {
+              const selected = selectedCategoryIds.includes(category.id);
+
+              return (
+                <label
+                  key={category.id}
+                  className={cn(
+                    "flex cursor-pointer items-start gap-3 rounded-md border bg-background p-3 text-sm transition-colors",
+                    selected && "border-primary bg-secondary",
+                  )}
+                >
+                  <input
+                    type="checkbox"
+                    value={category.id}
+                    className="mt-0.5 h-4 w-4 rounded border-input accent-primary"
+                    {...form.register("categoryIds")}
+                  />
+                  <span>
+                    <span className="block font-semibold">{category.label}</span>
+                    <span className="block text-xs text-muted-foreground">{category.sportLabel}</span>
+                  </span>
+                </label>
+              );
+            })}
+          </div>
+        </fieldset>
+      ) : null}
       <FormField label="Status" htmlFor="status" error={form.formState.errors.status?.message}>
         <Controller
           control={form.control}

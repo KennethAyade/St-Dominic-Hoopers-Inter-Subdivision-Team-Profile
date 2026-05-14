@@ -85,28 +85,93 @@ export async function savePlayer(input: unknown): Promise<ActionResult> {
   try {
     const user = await requireAdmin();
     const data = playerSchema.parse(input);
+    const { id, categoryIds, ...playerData } = data;
 
-    const player = data.id
+    const player = id
       ? await prisma.player.update({
-          where: { id: data.id },
-          data: { ...data, id: undefined, updatedById: user.id },
+          where: { id },
+          data: { ...playerData, updatedById: user.id },
         })
       : await prisma.player.create({
-          data: { ...data, createdById: user.id, updatedById: user.id },
+          data: { ...playerData, createdById: user.id, updatedById: user.id },
         });
+
+    if (categoryIds) {
+      await syncPlayerRosterCategories({
+        playerId: player.id,
+        categoryIds,
+        role: player.defaultRole,
+        jerseyNumber: player.jerseyNumber,
+        userId: user.id,
+      });
+    }
 
     await writeAudit({
       userId: user.id,
-      action: data.id ? "UPDATE" : "CREATE",
+      action: id ? "UPDATE" : "CREATE",
       entity: "Player",
       entityId: player.id,
-      summary: `${data.id ? "Updated" : "Created"} player ${player.firstName} ${player.lastName}.`,
+      summary: `${id ? "Updated" : "Created"} player ${player.firstName} ${player.lastName}.`,
     });
     revalidatePortal();
     return { ok: true, message: "Player saved." };
   } catch (error) {
     return actionError(error);
   }
+}
+
+async function syncPlayerRosterCategories(input: {
+  playerId: string;
+  categoryIds: string[];
+  role?: string | null;
+  jerseyNumber?: string | null;
+  userId: string;
+}) {
+  const categoryIds = Array.from(new Set(input.categoryIds.filter(Boolean)));
+  const categories = await prisma.category.findMany({
+    where: { id: { in: categoryIds } },
+    select: { id: true },
+  });
+
+  if (categories.length !== categoryIds.length) {
+    throw new Error("Invalid category assignment");
+  }
+
+  const existingEntries = await prisma.rosterEntry.findMany({
+    where: { playerId: input.playerId },
+    select: { id: true, categoryId: true },
+  });
+  const existingCategoryIds = new Set(existingEntries.map((entry) => entry.categoryId));
+  const entryRole = input.role?.trim() || "Player";
+  const newEntries = categoryIds
+    .filter((categoryId) => !existingCategoryIds.has(categoryId))
+    .map((categoryId) => ({
+      playerId: input.playerId,
+      categoryId,
+      role: entryRole,
+      jerseyNumber: input.jerseyNumber || null,
+      createdById: input.userId,
+      updatedById: input.userId,
+    }));
+  const writes = [
+    prisma.rosterEntry.deleteMany({
+      where: {
+        playerId: input.playerId,
+        categoryId: { notIn: categoryIds },
+      },
+    }),
+  ];
+
+  if (newEntries.length) {
+    writes.push(
+      prisma.rosterEntry.createMany({
+        data: newEntries,
+        skipDuplicates: true,
+      }),
+    );
+  }
+
+  await prisma.$transaction(writes);
 }
 
 export async function deletePlayer(id: string): Promise<ActionResult> {

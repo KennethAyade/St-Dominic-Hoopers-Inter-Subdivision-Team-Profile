@@ -59,6 +59,11 @@ export default async function AdminPlayersPage({
     categories.find((item) => item.slug === category)?.name ||
     sports.find((item) => item.slug === sport)?.name ||
     "All players";
+  const categoryOptions = categories.map((item) => ({
+    id: item.id,
+    label: item.name,
+    sportLabel: item.sport.name,
+  }));
 
   return (
     <>
@@ -67,7 +72,7 @@ export default async function AdminPlayersPage({
         description="Add, edit, delete, and verify player records."
         actions={
           <AdminFormDialog title="Add player" triggerLabel="Add player">
-            <PlayerForm />
+            <PlayerForm categories={categoryOptions} />
           </AdminFormDialog>
         }
       />
@@ -162,6 +167,7 @@ export default async function AdminPlayersPage({
                           lastName: player.lastName,
                           nickname: player.nickname ?? "",
                           imageUrl: player.imageUrl ?? "",
+                          categoryIds: Array.from(new Set(player.rosterEntries.map((entry) => entry.categoryId))),
                           defaultRole: player.defaultRole ?? "",
                           jerseyNumber: player.jerseyNumber ?? "",
                           ageGroup: player.ageGroup ?? "",
@@ -169,6 +175,7 @@ export default async function AdminPlayersPage({
                           notes: player.notes ?? "",
                           seedNote: player.seedNote ?? "",
                         }}
+                        categories={categoryOptions}
                       />
                     </AdminEditDialog>
                     <DeleteButton id={player.id} kind="player" />
