@@ -81,6 +81,15 @@ function actionError(error: unknown): ActionResult {
   return { ok: false, message: "Something went wrong. Please review the fields and try again." };
 }
 
+function parseManilaDateTime(value: string) {
+  if (/[zZ]|[+-]\d{2}:?\d{2}$/.test(value)) {
+    return new Date(value);
+  }
+
+  const withSeconds = value.length === 16 ? `${value}:00` : value;
+  return new Date(`${withSeconds}+08:00`);
+}
+
 export async function savePlayer(input: unknown): Promise<ActionResult> {
   try {
     const user = await requireAdmin();
@@ -317,7 +326,7 @@ export async function saveSchedule(input: unknown): Promise<ActionResult> {
     const payload = {
       categoryId: data.categoryId,
       opponentName: data.opponentName,
-      matchDate: new Date(data.matchDate),
+      matchDate: parseManilaDateTime(data.matchDate),
       venue: data.venue,
       status: data.status,
       homeScore: data.homeScore,

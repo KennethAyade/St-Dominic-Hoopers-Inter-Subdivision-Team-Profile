@@ -17,11 +17,24 @@ import { FormField } from "@/components/forms/form-field";
 
 type Option = { id: string; label: string };
 
-const toLocalInput = (value?: string | Date) => {
+const toManilaInput = (value?: string | Date) => {
   if (!value) return "";
   const date = new Date(value);
-  const offset = date.getTimezoneOffset();
-  return new Date(date.getTime() - offset * 60_000).toISOString().slice(0, 16);
+  const parts = Object.fromEntries(
+    new Intl.DateTimeFormat("en-CA", {
+      timeZone: "Asia/Manila",
+      year: "numeric",
+      month: "2-digit",
+      day: "2-digit",
+      hour: "2-digit",
+      minute: "2-digit",
+      hourCycle: "h23",
+    })
+      .formatToParts(date)
+      .map((part) => [part.type, part.value]),
+  );
+
+  return `${parts.year}-${parts.month}-${parts.day}T${parts.hour}:${parts.minute}`;
 };
 
 export function ScheduleForm({ initialData, categories }: { initialData?: Partial<ScheduleInput>; categories: Option[] }) {
@@ -33,7 +46,7 @@ export function ScheduleForm({ initialData, categories }: { initialData?: Partia
       id: initialData?.id,
       categoryId: initialData?.categoryId ?? "",
       opponentName: initialData?.opponentName ?? "",
-      matchDate: toLocalInput(initialData?.matchDate),
+      matchDate: toManilaInput(initialData?.matchDate),
       venue: initialData?.venue ?? "",
       status: initialData?.status ?? MatchStatus.SCHEDULED,
       homeScore: initialData?.homeScore,
