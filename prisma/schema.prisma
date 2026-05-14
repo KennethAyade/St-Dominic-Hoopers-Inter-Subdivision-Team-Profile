@@ -1,0 +1,306 @@
+generator client {
+  provider = "prisma-client"
+  output   = "../src/generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+enum Role {
+  ADMIN
+  USER
+  VIEWER
+}
+
+enum PlayerStatus {
+  ACTIVE
+  INJURED
+  INACTIVE
+  REMOVED
+}
+
+enum MatchStatus {
+  SCHEDULED
+  ONGOING
+  COMPLETED
+  CANCELLED
+  POSTPONED
+}
+
+enum AnnouncementCategory {
+  UPDATE
+  REMINDER
+  RESULT
+  NOTICE
+}
+
+enum GalleryItemType {
+  PHOTO
+  VIDEO
+}
+
+enum AuditAction {
+  CREATE
+  UPDATE
+  DELETE
+  PUBLISH
+  UNPUBLISH
+  SIGN_IN
+}
+
+model User {
+  id            String    @id @default(cuid())
+  name          String?
+  email         String    @unique
+  emailVerified DateTime?
+  image         String?
+  passwordHash  String?
+  role          Role      @default(USER)
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+
+  accounts             Account[]
+  sessions             Session[]
+  createdAnnouncements Announcement[]  @relation("AnnouncementCreatedBy")
+  updatedAnnouncements Announcement[]  @relation("AnnouncementUpdatedBy")
+  createdPlayers       Player[]        @relation("PlayerCreatedBy")
+  updatedPlayers       Player[]        @relation("PlayerUpdatedBy")
+  createdRosterEntries RosterEntry[]   @relation("RosterEntryCreatedBy")
+  updatedRosterEntries RosterEntry[]   @relation("RosterEntryUpdatedBy")
+  createdSchedules     MatchSchedule[] @relation("ScheduleCreatedBy")
+  updatedSchedules     MatchSchedule[] @relation("ScheduleUpdatedBy")
+  createdStandings     Standing[]      @relation("StandingCreatedBy")
+  updatedStandings     Standing[]      @relation("StandingUpdatedBy")
+  createdGalleryItems  GalleryItem[]   @relation("GalleryItemCreatedBy")
+  updatedGalleryItems  GalleryItem[]   @relation("GalleryItemUpdatedBy")
+  auditLogs            AuditLog[]
+}
+
+model Account {
+  userId            String
+  type              String
+  provider          String
+  providerAccountId String
+  refresh_token     String?
+  access_token      String?
+  expires_at        Int?
+  token_type        String?
+  scope             String?
+  id_token          String?
+  session_state     String?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@id([provider, providerAccountId])
+}
+
+model Session {
+  sessionToken String   @unique
+  userId       String
+  expires      DateTime
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model VerificationToken {
+  identifier String
+  token      String
+  expires    DateTime
+
+  @@id([identifier, token])
+}
+
+model Sport {
+  id          String   @id @default(cuid())
+  name        String
+  slug        String   @unique
+  description String?
+  icon        String?
+  isActive    Boolean  @default(true)
+  sortOrder   Int      @default(0)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  categories Category[]
+}
+
+model Category {
+  id          String   @id @default(cuid())
+  sportId     String
+  name        String
+  slug        String   @unique
+  description String?
+  isActive    Boolean  @default(true)
+  sortOrder   Int      @default(0)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  sport          Sport           @relation(fields: [sportId], references: [id], onDelete: Cascade)
+  rosterEntries  RosterEntry[]
+  matchSchedules MatchSchedule[]
+  standings      Standing[]
+  galleryItems   GalleryItem[]
+
+  @@index([sportId])
+}
+
+model Player {
+  id           String       @id @default(cuid())
+  firstName    String
+  lastName     String
+  nickname     String?
+  defaultRole  String?
+  jerseyNumber String?
+  ageGroup     String?
+  status       PlayerStatus @default(ACTIVE)
+  notes        String?
+  seedNote     String?
+  createdById  String?
+  updatedById  String?
+  createdAt    DateTime     @default(now())
+  updatedAt    DateTime     @updatedAt
+
+  rosterEntries RosterEntry[]
+  standings     Standing[]
+  createdBy     User?         @relation("PlayerCreatedBy", fields: [createdById], references: [id], onDelete: SetNull)
+  updatedBy     User?         @relation("PlayerUpdatedBy", fields: [updatedById], references: [id], onDelete: SetNull)
+
+  @@index([lastName, firstName])
+  @@index([status])
+}
+
+model RosterEntry {
+  id           String   @id @default(cuid())
+  playerId     String
+  categoryId   String
+  role         String
+  jerseyNumber String?
+  isCaptain    Boolean  @default(false)
+  isCoach      Boolean  @default(false)
+  isManager    Boolean  @default(false)
+  notes        String?
+  createdById  String?
+  updatedById  String?
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  player    Player   @relation(fields: [playerId], references: [id], onDelete: Cascade)
+  category  Category @relation(fields: [categoryId], references: [id], onDelete: Cascade)
+  createdBy User?    @relation("RosterEntryCreatedBy", fields: [createdById], references: [id], onDelete: SetNull)
+  updatedBy User?    @relation("RosterEntryUpdatedBy", fields: [updatedById], references: [id], onDelete: SetNull)
+
+  @@unique([playerId, categoryId, role])
+  @@index([categoryId])
+}
+
+model MatchSchedule {
+  id            String      @id @default(cuid())
+  categoryId    String
+  opponentName  String
+  matchDate     DateTime
+  venue         String
+  status        MatchStatus @default(SCHEDULED)
+  homeScore     Int?
+  opponentScore Int?
+  resultText    String?
+  remarks       String?
+  createdById   String?
+  updatedById   String?
+  createdAt     DateTime    @default(now())
+  updatedAt     DateTime    @updatedAt
+
+  category  Category @relation(fields: [categoryId], references: [id], onDelete: Cascade)
+  createdBy User?    @relation("ScheduleCreatedBy", fields: [createdById], references: [id], onDelete: SetNull)
+  updatedBy User?    @relation("ScheduleUpdatedBy", fields: [updatedById], references: [id], onDelete: SetNull)
+
+  @@index([categoryId, matchDate])
+  @@index([status])
+}
+
+model Standing {
+  id              String   @id @default(cuid())
+  categoryId      String
+  playerId        String?
+  teamName        String?
+  playerName      String?
+  wins            Int      @default(0)
+  losses          Int      @default(0)
+  points          Int      @default(0)
+  rank            Int      @default(0)
+  scoreDifference Int      @default(0)
+  remarks         String?
+  createdById     String?
+  updatedById     String?
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  category  Category @relation(fields: [categoryId], references: [id], onDelete: Cascade)
+  player    Player?  @relation(fields: [playerId], references: [id], onDelete: SetNull)
+  createdBy User?    @relation("StandingCreatedBy", fields: [createdById], references: [id], onDelete: SetNull)
+  updatedBy User?    @relation("StandingUpdatedBy", fields: [updatedById], references: [id], onDelete: SetNull)
+
+  @@index([categoryId, rank])
+}
+
+model Announcement {
+  id          String               @id @default(cuid())
+  title       String
+  slug        String               @unique
+  content     String
+  category    AnnouncementCategory @default(UPDATE)
+  published   Boolean              @default(false)
+  publishedAt DateTime?
+  createdById String?
+  updatedById String?
+  createdAt   DateTime             @default(now())
+  updatedAt   DateTime             @updatedAt
+
+  createdBy User? @relation("AnnouncementCreatedBy", fields: [createdById], references: [id], onDelete: SetNull)
+  updatedBy User? @relation("AnnouncementUpdatedBy", fields: [updatedById], references: [id], onDelete: SetNull)
+
+  @@index([published, publishedAt])
+  @@index([category])
+}
+
+model GalleryItem {
+  id           String          @id @default(cuid())
+  categoryId   String?
+  title        String
+  description  String?
+  imageUrl     String?
+  type         GalleryItemType @default(PHOTO)
+  published    Boolean         @default(false)
+  displayOrder Int             @default(0)
+  createdById  String?
+  updatedById  String?
+  createdAt    DateTime        @default(now())
+  updatedAt    DateTime        @updatedAt
+
+  category  Category? @relation(fields: [categoryId], references: [id], onDelete: SetNull)
+  createdBy User?     @relation("GalleryItemCreatedBy", fields: [createdById], references: [id], onDelete: SetNull)
+  updatedBy User?     @relation("GalleryItemUpdatedBy", fields: [updatedById], references: [id], onDelete: SetNull)
+
+  @@index([published, displayOrder])
+}
+
+model AuditLog {
+  id        String      @id @default(cuid())
+  userId    String?
+  action    AuditAction
+  entity    String
+  entityId  String?
+  summary   String
+  metadata  Json?
+  createdAt DateTime    @default(now())
+
+  user User? @relation(fields: [userId], references: [id], onDelete: SetNull)
+
+  @@index([userId, createdAt])
+  @@index([entity, entityId])
+}

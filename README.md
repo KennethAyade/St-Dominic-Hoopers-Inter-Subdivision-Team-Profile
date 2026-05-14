@@ -1,36 +1,113 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# St. Dominic Hoopers Mayor's Cup Team Portal
 
-## Getting Started
+Official full-stack portal for the St. Dominic Hoopers subdivision team participating in the Mayor's Cup / Lapu-Lapu City Hoops Sports Festival 2026.
 
-First, run the development server:
+## Stack
+
+- Next.js 16 App Router + TypeScript
+- PostgreSQL through Prisma Cloud / Prisma Postgres
+- Prisma ORM 7 with PostgreSQL driver adapter
+- NextAuth.js v5 beta with role-based admin access
+- Tailwind CSS v4 + shadcn/ui-style components
+- React Hook Form + Zod validation
+- Nodemailer SMTP contact form
+
+## Features
+
+- Public pages for sports, rosters, schedules, standings, announcements, gallery, and contact
+- Sport detail pages for Basketball Open Category, Basketball 3x3 14 Under, Mobile Legends, Darts, and Badminton
+- Protected admin dashboard with CRUD for players, sports/categories, rosters, schedules/results, standings, announcements, gallery, and users
+- Server-side validation and admin role checks before every mutation
+- Audit logging for admin create/update/delete actions
+- Seed data for initial sports/categories, Mobile Legends roster, Basketball Open roster draft, and team officials
+
+Private registration form data such as addresses, precinct numbers, signatures, and parent/guardian signatures is intentionally not modeled or seeded.
+
+## Setup
+
+1. Install dependencies:
+
+```bash
+npm install
+```
+
+2. Copy environment variables:
+
+```bash
+cp .env.example .env
+```
+
+On Windows PowerShell:
+
+```powershell
+Copy-Item .env.example .env
+```
+
+3. Set `DATABASE_URL`, `AUTH_SECRET`, and SMTP variables in `.env`.
+
+4. Generate Prisma Client:
+
+```bash
+npx prisma generate
+```
+
+5. Create and apply a migration:
+
+```bash
+npx prisma migrate dev
+```
+
+6. Seed initial data:
+
+```bash
+npx prisma db seed
+```
+
+Seeded admin login:
+
+```text
+admin@stdominichoopers.local
+ChangeMeMayorCup2026!
+```
+
+Change this password immediately after setup.
+
+7. Run the development server:
 
 ```bash
 npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+Open `http://localhost:3000`.
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+## Required Environment Variables
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+```env
+DATABASE_URL=
+AUTH_SECRET=
+SMTP_HOST=
+SMTP_PORT=
+SMTP_USER=
+SMTP_PASS=
+SMTP_FROM=
+ADMIN_EMAIL=
+```
 
-## Learn More
+## Useful Commands
 
-To learn more about Next.js, take a look at the following resources:
+```bash
+npm install
+npx prisma generate
+npx prisma migrate dev
+npx prisma db seed
+npm run dev
+npm run lint
+npm run build
+```
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+## Deployment Notes
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
-
-## Deploy on Vercel
-
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+- Deployable to Vercel.
+- Add all environment variables in the Vercel project settings.
+- `postinstall` runs `prisma generate`, so the generated Prisma client is created during deployment.
+- The public gallery supports local and remote image URLs.
