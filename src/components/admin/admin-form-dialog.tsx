@@ -1,7 +1,10 @@
+"use client";
+
 import type { ReactNode } from "react";
 import { Plus } from "lucide-react";
-import { Button } from "@/components/ui/button";
+import { buttonVariants } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { cn } from "@/lib/utils";
 
 export function AdminFormDialog({
   title,
@@ -18,13 +21,11 @@ export function AdminFormDialog({
 }) {
   return (
     <Dialog>
-      <DialogTrigger asChild>
-        <Button variant={variant} size="sm">
-          <Plus className="h-4 w-4" />
-          {triggerLabel}
-        </Button>
+      <DialogTrigger className={cn(buttonVariants({ variant, size: "sm" }))}>
+        <Plus className="h-4 w-4" />
+        {triggerLabel}
       </DialogTrigger>
-      <DialogContent>
+      <DialogContent aria-describedby={description ? undefined : undefined}>
         <DialogHeader>
           <DialogTitle>{title}</DialogTitle>
           {description ? <DialogDescription>{description}</DialogDescription> : null}
@@ -46,12 +47,8 @@ export function AdminEditDialog({
 }) {
   return (
     <Dialog>
-      <DialogTrigger asChild>
-        <Button variant="outline" size="sm" type="button">
-          Edit
-        </Button>
-      </DialogTrigger>
-      <DialogContent>
+      <DialogTrigger className={cn(buttonVariants({ variant: "outline", size: "sm" }))}>Edit</DialogTrigger>
+      <DialogContent aria-describedby={description ? undefined : undefined}>
         <DialogHeader>
           <DialogTitle>{title}</DialogTitle>
           {description ? <DialogDescription>{description}</DialogDescription> : null}

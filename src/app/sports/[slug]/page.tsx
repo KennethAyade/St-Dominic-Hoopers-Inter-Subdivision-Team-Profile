@@ -3,7 +3,7 @@ import { prisma } from "@/lib/prisma";
 import { SiteShell } from "@/components/public/site-shell";
 import { PageHeader } from "@/components/public/page-header";
 import { EmptyState } from "@/components/public/empty-state";
-import { RosterTable } from "@/components/public/roster-table";
+import { RosterProfileGrid } from "@/components/public/roster-profile-grid";
 import { ScheduleTable } from "@/components/public/schedule-table";
 import { StandingTable } from "@/components/public/standing-table";
 import { AnnouncementCard } from "@/components/public/announcement-card";
@@ -43,11 +43,11 @@ export default async function SportDetailPage({ params }: { params: Promise<{ sl
         title={category.name}
         description={category.description || "Official roster, schedules, results, standings, and notes for this category."}
       />
-      <section className="mx-auto grid w-full max-w-7xl gap-10 px-4 py-10 sm:px-6 lg:px-8">
+      <section className="mx-auto grid w-full max-w-6xl gap-8 px-4 pb-12 sm:px-6 lg:px-8">
         <div>
           <h2 className="mb-4 text-2xl font-black tracking-normal">Roster / player list</h2>
           {category.rosterEntries.length ? (
-            <RosterTable entries={category.rosterEntries} />
+            <RosterProfileGrid entries={category.rosterEntries} />
           ) : (
             <EmptyState title="Roster will be updated soon." description="Admins can add roster entries from the dashboard when the lineup is finalized." />
           )}

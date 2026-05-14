@@ -16,6 +16,7 @@ export function RosterTable({
       firstName: string;
       lastName: string;
       nickname?: string | null;
+      imageUrl?: string | null;
       status: PlayerStatus;
       seedNote?: string | null;
     };

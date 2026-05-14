@@ -5,6 +5,7 @@ import { AdminEditDialog, AdminFormDialog } from "@/components/admin/admin-form-
 import { DeleteButton } from "@/components/forms/delete-button";
 import { RosterEntryForm } from "@/components/forms/roster-entry-form";
 import { EmptyState } from "@/components/public/empty-state";
+import { PlayerAvatar } from "@/components/public/player-avatar";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 
 export const dynamic = "force-dynamic";
@@ -37,6 +38,7 @@ export default async function AdminRostersPage() {
         <Table>
           <TableHeader>
             <TableRow>
+              <TableHead>Photo</TableHead>
               <TableHead>Player</TableHead>
               <TableHead>Category</TableHead>
               <TableHead>Role</TableHead>
@@ -48,6 +50,9 @@ export default async function AdminRostersPage() {
           <TableBody>
             {entries.map((entry) => (
               <TableRow key={entry.id}>
+                <TableCell>
+                  <PlayerAvatar name={fullName(entry.player)} imageUrl={entry.player.imageUrl} className="h-10 w-10 text-xs" />
+                </TableCell>
                 <TableCell className="font-semibold">{fullName(entry.player)}</TableCell>
                 <TableCell>{entry.category.name}</TableCell>
                 <TableCell>{entry.role}</TableCell>

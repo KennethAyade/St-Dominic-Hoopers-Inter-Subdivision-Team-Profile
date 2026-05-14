@@ -14,7 +14,7 @@ export default function ContactPage() {
         title="Contact the team admin"
         description="Send official inquiries, schedule clarifications, correction requests, or announcement details."
       />
-      <section className="mx-auto grid w-full max-w-7xl gap-8 px-4 py-10 sm:px-6 lg:grid-cols-[0.8fr_1.2fr] lg:px-8">
+      <section className="mx-auto grid w-full max-w-6xl gap-6 px-4 pb-12 sm:px-6 md:grid-cols-[0.85fr_1.15fr] lg:px-8">
         <div className="grid gap-4">
           <Card>
             <CardContent className="flex gap-4 p-5">

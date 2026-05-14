@@ -25,7 +25,7 @@ export function ScheduleTable({
         <TableRow>
           <TableHead>Date</TableHead>
           <TableHead>Category</TableHead>
-          <TableHead>Opponent</TableHead>
+          <TableHead>Match / opponent</TableHead>
           <TableHead>Venue</TableHead>
           <TableHead>Status</TableHead>
           <TableHead>Result</TableHead>

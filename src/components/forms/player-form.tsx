@@ -2,7 +2,7 @@
 
 import { useRouter } from "next/navigation";
 import { useTransition } from "react";
-import { Controller, useForm } from "react-hook-form";
+import { Controller, useForm, useWatch } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { toast } from "sonner";
 import { PlayerStatus } from "@/generated/prisma/browser";
@@ -13,6 +13,7 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { FormField } from "@/components/forms/form-field";
+import { PlayerAvatar } from "@/components/public/player-avatar";
 import { PLAYER_STATUS_LABELS } from "@/lib/constants";
 
 export function PlayerForm({ initialData }: { initialData?: Partial<PlayerInput> }) {
@@ -25,6 +26,7 @@ export function PlayerForm({ initialData }: { initialData?: Partial<PlayerInput>
       firstName: initialData?.firstName ?? "",
       lastName: initialData?.lastName ?? "",
       nickname: initialData?.nickname ?? "",
+      imageUrl: initialData?.imageUrl ?? "",
       defaultRole: initialData?.defaultRole ?? "",
       jerseyNumber: initialData?.jerseyNumber ?? "",
       ageGroup: initialData?.ageGroup ?? "",
@@ -33,6 +35,10 @@ export function PlayerForm({ initialData }: { initialData?: Partial<PlayerInput>
       seedNote: initialData?.seedNote ?? "",
     },
   });
+  const imageUrl = useWatch({ control: form.control, name: "imageUrl" });
+  const firstName = useWatch({ control: form.control, name: "firstName" });
+  const lastName = useWatch({ control: form.control, name: "lastName" });
+  const previewName = `${firstName || "Player"} ${lastName || "Profile"}`;
 
   const onSubmit = form.handleSubmit((values) => {
     startTransition(async () => {
@@ -45,6 +51,13 @@ export function PlayerForm({ initialData }: { initialData?: Partial<PlayerInput>
 
   return (
     <form onSubmit={onSubmit} className="grid gap-4">
+      <div className="flex items-center gap-4 rounded-lg border bg-muted/40 p-4">
+        <PlayerAvatar name={previewName} imageUrl={imageUrl} className="h-16 w-16" />
+        <div>
+          <p className="text-sm font-bold">Profile photo</p>
+          <p className="text-xs text-muted-foreground">Paste a hosted image URL below. Empty values use initials automatically.</p>
+        </div>
+      </div>
       <div className="grid gap-4 sm:grid-cols-2">
         <FormField label="First name" htmlFor="firstName" error={form.formState.errors.firstName?.message}>
           <Input id="firstName" {...form.register("firstName")} />
@@ -54,6 +67,9 @@ export function PlayerForm({ initialData }: { initialData?: Partial<PlayerInput>
         </FormField>
         <FormField label="Nickname" htmlFor="nickname" error={form.formState.errors.nickname?.message}>
           <Input id="nickname" {...form.register("nickname")} />
+        </FormField>
+        <FormField label="Profile image URL" htmlFor="imageUrl" error={form.formState.errors.imageUrl?.message}>
+          <Input id="imageUrl" placeholder="https://..." {...form.register("imageUrl")} />
         </FormField>
         <FormField label="Default role" htmlFor="defaultRole" error={form.formState.errors.defaultRole?.message}>
           <Input id="defaultRole" placeholder="Guard, Roam, Player" {...form.register("defaultRole")} />

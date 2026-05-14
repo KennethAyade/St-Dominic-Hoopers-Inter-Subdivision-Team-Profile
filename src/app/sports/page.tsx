@@ -23,9 +23,9 @@ export default async function SportsPage() {
         title="Participated sports and categories"
         description="Browse each St. Dominic Hoopers category page for rosters, fixtures, results, standings, and notes."
       />
-      <section className="mx-auto w-full max-w-7xl px-4 py-10 sm:px-6 lg:px-8">
+      <section className="mx-auto w-full max-w-6xl px-4 pb-12 sm:px-6 lg:px-8">
         {categories.length ? (
-          <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
+          <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
             {categories.map((category) => (
               <SportCard
                 key={category.id}

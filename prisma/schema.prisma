@@ -155,6 +155,7 @@ model Player {
   firstName    String
   lastName     String
   nickname     String?
+  imageUrl     String?
   defaultRole  String?
   jerseyNumber String?
   ageGroup     String?

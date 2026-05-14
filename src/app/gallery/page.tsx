@@ -23,9 +23,9 @@ export default async function GalleryPage() {
         title="Photos and media"
         description="Official photos can be added from the admin dashboard. Placeholder entries keep the section ready before event media arrives."
       />
-      <section className="mx-auto w-full max-w-7xl px-4 py-10 sm:px-6 lg:px-8">
+      <section className="mx-auto w-full max-w-6xl px-4 pb-12 sm:px-6 lg:px-8">
         {items.length ? (
-          <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
+          <div className="grid gap-4 sm:grid-cols-2">
             {items.map((item) => (
               <Card key={item.id} className="overflow-hidden">
                 <div className="relative flex aspect-video items-center justify-center bg-muted">

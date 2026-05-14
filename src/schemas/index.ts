@@ -21,6 +21,7 @@ export const playerSchema = z.object({
   firstName: z.string().trim().min(1, "First name is required."),
   lastName: z.string().trim().min(1, "Last name is required."),
   nickname: optionalText,
+  imageUrl: optionalText,
   defaultRole: optionalText,
   jerseyNumber: optionalText,
   ageGroup: optionalText,

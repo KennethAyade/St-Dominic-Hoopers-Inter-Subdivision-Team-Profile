@@ -2,7 +2,7 @@ import Link from "next/link";
 import { prisma } from "@/lib/prisma";
 import { SiteShell } from "@/components/public/site-shell";
 import { PageHeader } from "@/components/public/page-header";
-import { RosterTable } from "@/components/public/roster-table";
+import { RosterProfileGrid } from "@/components/public/roster-profile-grid";
 import { EmptyState } from "@/components/public/empty-state";
 import { Button } from "@/components/ui/button";
 
@@ -26,7 +26,7 @@ export default async function RostersPage({ searchParams }: { searchParams: Prom
         title="Official player rosters"
         description="Filter by sport/category to view active roster entries and team roles."
       />
-      <section className="mx-auto w-full max-w-7xl px-4 py-10 sm:px-6 lg:px-8">
+      <section className="mx-auto w-full max-w-6xl px-4 pb-12 sm:px-6 lg:px-8">
         <div className="mb-6 flex flex-wrap gap-2">
           <Button asChild variant={!category ? "default" : "outline"} size="sm">
             <Link href="/rosters">All</Link>
@@ -37,7 +37,7 @@ export default async function RostersPage({ searchParams }: { searchParams: Prom
             </Button>
           ))}
         </div>
-        {entries.length ? <RosterTable entries={entries} /> : <EmptyState title="Roster will be updated soon." />}
+        {entries.length ? <RosterProfileGrid entries={entries} showCategory={!category} /> : <EmptyState title="Roster will be updated soon." />}
       </section>
     </SiteShell>
   );

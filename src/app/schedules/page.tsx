@@ -27,7 +27,7 @@ export default async function SchedulesPage() {
         title="Upcoming and completed matches"
         description="Track all confirmed fixtures with status badges for scheduled, ongoing, completed, cancelled, and postponed matches."
       />
-      <section className="mx-auto grid w-full max-w-7xl gap-10 px-4 py-10 sm:px-6 lg:px-8">
+      <section className="mx-auto grid w-full max-w-6xl gap-8 px-4 pb-12 sm:px-6 lg:px-8">
         <div>
           <h2 className="mb-4 text-2xl font-black tracking-normal">Upcoming</h2>
           {upcoming.length ? <ScheduleTable schedules={upcoming} /> : <EmptyState title="No upcoming matches yet." />}

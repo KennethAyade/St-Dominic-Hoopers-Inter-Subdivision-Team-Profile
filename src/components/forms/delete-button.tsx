@@ -24,7 +24,8 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
-import { Button } from "@/components/ui/button";
+import { buttonVariants } from "@/components/ui/button";
+import { cn } from "@/lib/utils";
 
 type DeleteKind = "player" | "category" | "roster" | "schedule" | "standing" | "announcement" | "gallery" | "user";
 
@@ -45,10 +46,8 @@ export function DeleteButton({ id, kind, label = "Delete" }: { id: string; kind:
 
   return (
     <AlertDialog>
-      <AlertDialogTrigger asChild>
-        <Button variant="destructive" size="sm" type="button">
-          {label}
-        </Button>
+      <AlertDialogTrigger className={cn(buttonVariants({ variant: "destructive", size: "sm" }))}>
+        {label}
       </AlertDialogTrigger>
       <AlertDialogContent>
         <AlertDialogHeader>
