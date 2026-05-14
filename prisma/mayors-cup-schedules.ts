@@ -195,11 +195,6 @@ export async function seedMayorCupSchedules(prisma: PrismaClient, userId: string
       opponentName: schedule.opponentName,
       matchDate: schedule.matchDate,
       venue: schedule.venue,
-      status: MatchStatus.SCHEDULED,
-      homeScore: null,
-      opponentScore: null,
-      resultText: null,
-      remarks: null,
       updatedById: userId,
     };
 
@@ -209,6 +204,11 @@ export async function seedMayorCupSchedules(prisma: PrismaClient, userId: string
       create: {
         id: schedule.id,
         ...data,
+        status: MatchStatus.SCHEDULED,
+        homeScore: null,
+        opponentScore: null,
+        resultText: null,
+        remarks: null,
         createdById: userId,
       },
     });

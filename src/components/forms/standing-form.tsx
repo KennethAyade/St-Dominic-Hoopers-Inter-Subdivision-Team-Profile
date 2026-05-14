@@ -32,7 +32,7 @@ export function StandingForm({
       id: initialData?.id,
       categoryId: initialData?.categoryId ?? "",
       playerId: initialData?.playerId ?? "",
-      teamName: initialData?.teamName ?? "St. Dominic Hoopers",
+      teamName: initialData?.teamName ?? "",
       playerName: initialData?.playerName ?? "",
       wins: initialData?.wins ?? 0,
       losses: initialData?.losses ?? 0,
@@ -47,7 +47,20 @@ export function StandingForm({
     startTransition(async () => {
       const result = await saveStanding(values);
       toast[result.ok ? "success" : "error"](result.message);
-      if (result.ok && !values.id) form.reset({ wins: 0, losses: 0, points: 0, rank: 0, scoreDifference: 0 } as StandingInput);
+      if (result.ok && !values.id) {
+        form.reset({
+          categoryId: "",
+          playerId: "",
+          teamName: "",
+          playerName: "",
+          wins: 0,
+          losses: 0,
+          points: 0,
+          rank: 0,
+          scoreDifference: 0,
+          remarks: "",
+        } as StandingInput);
+      }
       router.refresh();
     });
   });

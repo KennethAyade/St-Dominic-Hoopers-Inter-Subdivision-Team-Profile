@@ -2,13 +2,14 @@
 
 import { useRouter } from "next/navigation";
 import { useTransition } from "react";
-import { Controller, useForm } from "react-hook-form";
+import { Controller, useForm, useWatch } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { toast } from "sonner";
 import { MatchStatus } from "@/generated/prisma/browser";
 import { saveSchedule } from "@/actions/admin";
 import { scheduleSchema, type ScheduleInput } from "@/schemas";
 import { MATCH_STATUS_LABELS } from "@/lib/constants";
+import { getScoreLabelsForMatchup } from "@/lib/matchup";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
@@ -55,6 +56,8 @@ export function ScheduleForm({ initialData, categories }: { initialData?: Partia
       remarks: initialData?.remarks ?? "",
     },
   });
+  const matchupText = useWatch({ control: form.control, name: "opponentName" }) ?? "";
+  const scoreLabels = getScoreLabelsForMatchup(matchupText);
 
   const onSubmit = form.handleSubmit((values) => {
     startTransition(async () => {
@@ -88,7 +91,7 @@ export function ScheduleForm({ initialData, categories }: { initialData?: Partia
         />
       </FormField>
       <div className="grid gap-4 sm:grid-cols-2">
-        <FormField label="Opponent/team" htmlFor="opponentName" error={form.formState.errors.opponentName?.message}>
+        <FormField label="Match / teams" htmlFor="opponentName" error={form.formState.errors.opponentName?.message}>
           <Input id="opponentName" {...form.register("opponentName")} />
         </FormField>
         <FormField label="Match date/time" htmlFor="matchDate" error={form.formState.errors.matchDate?.message}>
@@ -117,14 +120,14 @@ export function ScheduleForm({ initialData, categories }: { initialData?: Partia
             )}
           />
         </FormField>
-        <FormField label="St. Dominic score" htmlFor="homeScore" error={form.formState.errors.homeScore?.message}>
+        <FormField label={scoreLabels.teamAScoreLabel} htmlFor="homeScore" error={form.formState.errors.homeScore?.message}>
           <Input
             id="homeScore"
             type="number"
             {...form.register("homeScore", { setValueAs: (value) => (value === "" ? undefined : Number(value)) })}
           />
         </FormField>
-        <FormField label="Opponent score" htmlFor="opponentScore" error={form.formState.errors.opponentScore?.message}>
+        <FormField label={scoreLabels.teamBScoreLabel} htmlFor="opponentScore" error={form.formState.errors.opponentScore?.message}>
           <Input
             id="opponentScore"
             type="number"
@@ -133,7 +136,7 @@ export function ScheduleForm({ initialData, categories }: { initialData?: Partia
         </FormField>
       </div>
       <FormField label="Score/result text" htmlFor="resultText" error={form.formState.errors.resultText?.message}>
-        <Input id="resultText" placeholder="Won 78-66, Best of 3, etc." {...form.register("resultText")} />
+        <Input id="resultText" placeholder="Optional override, e.g. Won 78-66 or Best of 3" {...form.register("resultText")} />
       </FormField>
       <FormField label="Remarks" htmlFor="scheduleRemarks" error={form.formState.errors.remarks?.message}>
         <Textarea id="scheduleRemarks" {...form.register("remarks")} />

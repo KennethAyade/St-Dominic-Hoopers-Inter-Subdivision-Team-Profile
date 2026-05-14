@@ -1,6 +1,7 @@
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { MatchStatusBadge } from "@/components/public/status-badge";
 import { formatDateTime } from "@/lib/format";
+import { formatScheduleResult } from "@/lib/matchup";
 import type { MatchStatus } from "@/generated/prisma/browser";
 
 export function ScheduleTable({
@@ -41,12 +42,7 @@ export function ScheduleTable({
             <TableCell>
               <MatchStatusBadge status={schedule.status} />
             </TableCell>
-            <TableCell className="text-muted-foreground">
-              {schedule.resultText ||
-                (schedule.homeScore !== null && schedule.homeScore !== undefined
-                  ? `${schedule.homeScore} - ${schedule.opponentScore ?? 0}`
-                  : schedule.remarks || "-")}
-            </TableCell>
+            <TableCell className="text-muted-foreground">{formatScheduleResult(schedule)}</TableCell>
           </TableRow>
         ))}
       </TableBody>

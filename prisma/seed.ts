@@ -2,6 +2,7 @@ import { PrismaClient, AnnouncementCategory, PlayerStatus, Role } from "../src/g
 import { PrismaPg } from "@prisma/adapter-pg";
 import { hash } from "bcryptjs";
 import { MAYORS_CUP_SCHEDULE_EXPECTED_COUNTS, seedMayorCupSchedules } from "./mayors-cup-schedules";
+import { MAYORS_CUP_STANDING_EXPECTED_COUNTS, seedMayorCupStandings } from "./mayors-cup-standings";
 
 const adapter = new PrismaPg({
   connectionString: process.env.DATABASE_URL ?? "postgresql://user:password@localhost:5432/st_dominic_hoopers",
@@ -255,6 +256,7 @@ async function main() {
   );
 
   const scheduleSummary = await seedMayorCupSchedules(prisma, admin.id);
+  const standingSummary = await seedMayorCupStandings(prisma, admin.id);
 
   await prisma.announcement.upsert({
     where: { slug: "portal-launch" },
@@ -313,6 +315,10 @@ async function main() {
   console.log(`Mayor's Cup schedules: ${scheduleSummary.total}`);
   for (const [category, expected] of Object.entries(MAYORS_CUP_SCHEDULE_EXPECTED_COUNTS)) {
     console.log(`${category}: ${scheduleSummary.counts[category] ?? 0} / ${expected}`);
+  }
+  console.log(`Mayor's Cup Basketball standings seed rows: ${standingSummary.total}`);
+  for (const [category, expected] of Object.entries(MAYORS_CUP_STANDING_EXPECTED_COUNTS)) {
+    console.log(`${category}: ${standingSummary.counts[category] ?? 0} / ${expected}`);
   }
   console.log("Admin login: admin@stdominichoopers.local / ChangeMeMayorCup2026!");
 }
