@@ -2,8 +2,10 @@ import { prisma } from "@/lib/prisma";
 import { SiteShell } from "@/components/public/site-shell";
 import { PageHeader } from "@/components/public/page-header";
 import { StandingTable } from "@/components/public/standing-table";
+import { BracketStandingBoard } from "@/components/public/bracket-standing-board";
 import { EmptyState } from "@/components/public/empty-state";
 import { CategoryFilterBar } from "@/components/public/category-filter-bar";
+import { getStandingBracketLayout } from "@/lib/standing-brackets";
 import { sortStandings } from "@/lib/standings";
 
 export const dynamic = "force-dynamic";
@@ -49,12 +51,24 @@ export default async function StandingsPage({
             count: category._count.standings,
           }))}
         />
-        {sortedCategories.map((category) => (
-          <div key={category.id}>
-            <h2 className="mb-4 text-2xl font-black tracking-normal">{category.name}</h2>
-            {category.standings.length ? <StandingTable standings={category.standings} /> : <EmptyState title="Standings will be updated soon." />}
-          </div>
-        ))}
+        {sortedCategories.map((category) => {
+          const bracketLayout = getStandingBracketLayout(category.slug);
+
+          return (
+            <div key={category.id} className="min-w-0">
+              <h2 className="mb-4 text-2xl font-black tracking-normal">{category.name}</h2>
+              {category.standings.length ? (
+                bracketLayout ? (
+                  <BracketStandingBoard layout={bracketLayout} standings={category.standings} />
+                ) : (
+                  <StandingTable standings={category.standings} />
+                )
+              ) : (
+                <EmptyState title="Standings will be updated soon." />
+              )}
+            </div>
+          );
+        })}
       </section>
     </SiteShell>
   );
